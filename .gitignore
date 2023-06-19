@@ -36,3 +36,9 @@
 cmake-build-*
 .ipynb_checkpoints/
 pyelsed.egg-info/
+
+# build files
+build/
+
+# vscode files
+.vscode/
