@@ -24,23 +24,32 @@ inline py::tuple salient_segments_to_py(const upm::SalientSegments &ssegs) {
 }
 
 py::tuple compute_elsed(const py::array &py_img,
+                        int ksize = 3,
                         float sigma = 1,
                         float gradientThreshold = 30,
+                        uint8_t anchorThreshold = 8,
                         int minLineLen = 15,
                         double lineFitErrThreshold = 0.2,
                         double pxToSegmentDistTh = 1.5,
                         double validationTh = 0.15,
                         bool validate = true,
-                        bool treatJunctions = true
+                        bool treatJunctions = true,
+                        bool uint8 = true
 ) {
 
   py::buffer_info info = py_img.request();
-  cv::Mat img(info.shape[0], info.shape[1], CV_8UC1, (uint8_t *) info.ptr);
+  cv::Mat img = cv::Mat(info.shape[0], info.shape[1], CV_8UC1, (uint8_t *) info.ptr);
+  if (!uint8) {
+    img = cv::Mat(info.shape[0], info.shape[1], CV_16UC1, (uint16_t *) info.ptr);
+  }
+
   ELSEDParams params;
 
   params.sigma = sigma;
-  params.ksize = cvRound(sigma * 3 * 2 + 1) | 1; // Automatic kernel size detection
+  // params.ksize = cvRound(sigma * 3 * 2 + 1) | 1; // Automatic kernel size detection
+  params.ksize = ksize;
   params.gradientThreshold = gradientThreshold;
+  params.anchorThreshold = anchorThreshold;
   params.minLineLen = minLineLen;
   params.lineFitErrThreshold = lineFitErrThreshold;
   params.pxToSegmentDistTh = pxToSegmentDistTh;
@@ -59,13 +68,16 @@ PYBIND11_MODULE(pyelsed, m) {
         Computes ELSED: Enhanced Line SEgment Drawing in the input image.
     )pbdoc",
         py::arg("img"),
+        py::arg("ksize") = 3,
         py::arg("sigma") = 1,
         py::arg("gradientThreshold") = 30,
+        py::arg("anchorThreshold") = 8,
         py::arg("minLineLen") = 15,
         py::arg("lineFitErrThreshold") = 0.2,
         py::arg("pxToSegmentDistTh") = 1.5,
         py::arg("validationTh") = 0.15,
         py::arg("validate") = true,
-        py::arg("treatJunctions") = true
+        py::arg("treatJunctions") = true,
+        py::arg("uint8") = true
   );
 }
